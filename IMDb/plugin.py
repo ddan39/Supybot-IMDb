@@ -87,18 +87,22 @@ class IMDb(callbacks.Plugin):
 
         root = html.parse(page)
 
-        elems = root.xpath('//h1[@itemprop="name"]|\
-                //div[h4="Stars:"]|//div[h4="Genres:"]')
+        elems = root.xpath('//h1[@itemprop="name"]|//div[h4="Genres:"]')
 
         title = unid(elems[0].text.strip())
-        stars = unid(' '.join(elems[1].text_content().split()).replace('Stars: ', '').replace(' | See full cast and crew', ''))
-        genres = unid( ' '.join(elems[2].text_content().split()).strip().replace('Genres: ', ''))
+        genres = unid( ' '.join(elems[1].text_content().split()).strip().replace('Genres: ', ''))
+
+        elem = root.xpath('//div[h4="Stars:"]')
+        if elem:
+            stars = unid(' '.join(elem[0].text_content().split()).replace('Stars: ', '').replace(' | See full cast and crew', ''))
+        else:
+            stars = ''
 
         elem = root.xpath('//div[h4="Plot Keywords:"]')
         if elem:
             plot_keywords = unid(' '.join(elem[0].text_content().replace(u'\xbb', '').split()).strip().replace(' | See more', '').replace('Plot Keywords: ', ''))
         else:
-            plot_keywords = 'N/A'
+            plot_keywords = ''
 
         elem = root.xpath('//h1[@itemprop="name"]/span/a')
         if elem:
@@ -117,36 +121,51 @@ class IMDb(callbacks.Plugin):
             description = elem[0].text_content()
             description = unid(description.replace(u'\xbb', '').strip().replace('\nSee full summary', ''))
         else:
-            description = 'N/A'
+            description = ''
 
         elem = root.xpath('//a[@itemprop="director"]')
         if elem:
             director = unid(elem[0].text)
         else:
-            director = 'N/A'
+            director = ''
 
         elem = root.xpath('//div[h4="\n  Creator:\n  "]/a')
         if elem:
             creator = unid(elem[0].text)
         else:
-            creator = 'N/A'
+            creator = ''
 
         elem = root.xpath('//div[h4="Runtime:"]/time')
         if elem:
             runtime = elem[0].text
         else:
-            runtime = 'N/A'
+            runtime = ''
 
         irc.reply('\x02\x031,8IMDb\x03 %s' % imdb_url, prefixNick=False)
-        irc.reply('\x02\x0305\x1F%s\x1F\x03\x02 (%s) %s' % (title, year, rating), prefixNick=False)
-        if description and description != 'N/A':
-            irc.reply('\x0304Description:\x03 %s' % description, prefixNick=False)
-        if creator and creator != 'N/A':
-            irc.reply('\x0304Creator:\x03 %s' % creator, prefixNick=False)
-        irc.reply('\x0304Director:\x03 %s \x0304Stars:\x03 %s' % (director, stars), prefixNick=False)
-        irc.reply('\x0304Genres:\x03 %s \x0304Plot Keywords:\x03 %s' % (genres, plot_keywords), prefixNick=False)
-        if runtime and runtime != 'N/A':
-            irc.reply('\x0304Runtime:\x03 %s' % runtime, prefixNick=False)
+        irc.reply('\x02\x0304\x1F%s\x1F\x0311\x02 (%s) %s' % (title, year, rating), prefixNick=False)
+        if description:
+            irc.reply('\x0305Description\03 /\x0311 %s' % description, prefixNick=False)
+        if creator:
+            irc.reply('\x0305Creator\03 /\x0311 %s' % creator, prefixNick=False)
+
+        out = []
+        if director:
+            out.append('\x0305Director\03 /\x0311 %s' % director)
+        if stars:
+            out.append('\x0305Stars\x03 /\x0311 %s' % stars)
+        if out:
+            irc.reply(' '.join(out), prefixNick=False)
+
+        out = []
+        if genres:
+            out.append('\x0305Genres\03 /\x0311 %s' % genres)
+        if plot_keywords:
+            out.append('\x0305Plot Keywords\03 /\x0311 %s' % plot_keywords)
+        if out:
+            irc.reply('\x0305Genres\03 /\x0311 %s \x0305Plot Keywords\03 /\x0311 %s' % (genres, plot_keywords), prefixNick=False)
+
+        if runtime:
+            irc.reply('\x0305Runtime:\x03 %s' % runtime, prefixNick=False)
 
     imdb = wrap(imdb, [getopts({'s': '', 'short': ''}), 'text'])
 
