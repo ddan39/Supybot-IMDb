@@ -87,7 +87,7 @@ class IMDb(callbacks.Plugin):
 
         root = html.parse(page)
 
-        elems = root.xpath('//h1[@itemprop="name"]|//div[h4="Genres:"]')
+        elems = root.xpath('//h1/span[@itemprop="name"]|//div[h4="Genres:"]')
 
         title = unid(elems[0].text.strip())
         genres = unid( ' '.join(elems[1].text_content().split()).strip().replace('Genres: ', ''))
@@ -104,11 +104,11 @@ class IMDb(callbacks.Plugin):
         else:
             plot_keywords = ''
 
-        elem = root.xpath('//h1[@itemprop="name"]/span/a')
+        elem = root.xpath('//h1[span/@itemprop="name"]/span[last()]/a')
         if elem:
             year = elem[0].text
         else:
-            year = unid(root.xpath('//h1[@itemprop="name"]/span')[0].text.strip().strip(')(').replace(u'\u2013', '-'))
+            year = unid(root.xpath('//h1[span/@itemprop="name"]/span[last()]')[0].text.strip().strip(')(').replace(u'\u2013', '-'))
 
         elem = root.xpath('//div[@class="star-box-details"]/strong/span|//div[@class="star-box-details"]/span[@class="mellow"]/span')
         if elem:
@@ -119,7 +119,7 @@ class IMDb(callbacks.Plugin):
         elem = root.xpath('//p[@itemprop="description"]')
         if elem:
             description = elem[0].text_content()
-            description = unid(description.replace(u'\xbb', '').strip().replace('\nSee full summary', ''))
+            description = unid(description.replace(u'\xbb', '').strip().replace('See full summary', '').strip())
         else:
             description = ''
 
@@ -154,7 +154,7 @@ class IMDb(callbacks.Plugin):
         if stars:
             out.append('\x0305Stars\x03 /\x0311 %s' % stars)
         if out:
-            irc.reply(' '.join(out), prefixNick=False)
+            irc.reply('  '.join(out), prefixNick=False)
 
         out = []
         if genres:
@@ -162,10 +162,10 @@ class IMDb(callbacks.Plugin):
         if plot_keywords:
             out.append('\x0305Plot Keywords\03 /\x0311 %s' % plot_keywords)
         if out:
-            irc.reply('\x0305Genres\03 /\x0311 %s \x0305Plot Keywords\03 /\x0311 %s' % (genres, plot_keywords), prefixNick=False)
+            irc.reply('  '.join(out), prefixNick=False)
 
         if runtime:
-            irc.reply('\x0305Runtime:\x03 %s' % runtime, prefixNick=False)
+            irc.reply('\x0305Runtime\x03 /\x0311 %s' % runtime, prefixNick=False)
 
     imdb = wrap(imdb, [getopts({'s': '', 'short': ''}), 'text'])
 
