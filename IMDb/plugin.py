@@ -87,10 +87,20 @@ class IMDb(callbacks.Plugin):
 
         root = html.parse(page)
 
-        elems = root.xpath('//h1/span[@itemprop="name"]|//div[h4="Genres:"]')
+        elem = root.xpath('//h1/span[@itemprop="name"]')
+        name = unid(elem[0].text.strip())
 
-        title = unid(elems[0].text.strip())
-        genres = unid( ' '.join(elems[1].text_content().split()).strip().replace('Genres: ', ''))
+        elem = root.xpath('//h2[@class="tv_header"]')
+        if elem:
+            tv = unid(elem[0].text_content().strip().replace('\n        ', ''))
+        else:
+            tv = ''
+
+        elem = root.xpath('//div[@itemprop="genre"]')
+        if elem:
+            genres = unid(' '.join(elem[0].text_content().split()).strip().replace('Genres: ', ''))
+        else:
+            genres = ''
 
         elem = root.xpath('//div[h4="Stars:"]')
         if elem:
@@ -123,7 +133,7 @@ class IMDb(callbacks.Plugin):
         else:
             description = ''
 
-        elem = root.xpath('//a[@itemprop="director"]')
+        elem = root.xpath('//div[@itemprop="director"]/a/span')
         if elem:
             director = unid(elem[0].text)
         else:
@@ -142,7 +152,9 @@ class IMDb(callbacks.Plugin):
             runtime = ''
 
         irc.reply('\x02\x031,8IMDb\x03 %s' % imdb_url, prefixNick=False)
-        irc.reply('\x02\x0304\x1F%s\x1F\x0311\x02 (%s) %s' % (title, year, rating), prefixNick=False)
+        if tv:
+            irc.reply('\x02TV Show\x02 /\x0311 %s' % tv, prefixNick=False)
+        irc.reply('\x02\x0304\x1F%s\x1F\x0311\x02 (%s) %s' % (name, year, rating), prefixNick=False)
         if description:
             irc.reply('\x0305Description\03 /\x0311 %s' % description, prefixNick=False)
         if creator:
