@@ -34,7 +34,7 @@ class IMDb(callbacks.Plugin):
         self.__parent.__init__(irc)
 
 
-    def imdb(self, irc, msg, args, opts, text):
+    def imdb(self, irc, msg, args, text):
         """<movie>
         output info from IMDb about a movie"""
 
@@ -102,6 +102,12 @@ class IMDb(callbacks.Plugin):
         else:
             genres = ''
 
+        elem = root.xpath('//div[h4="Language:"]')
+        if elem:
+            language = unid(' '.join(elem[0].text_content().split()).strip().replace('Language: ', ''))
+        else:
+            language = ''
+
         elem = root.xpath('//div[h4="Stars:"]')
         if elem:
             stars = unid(' '.join(elem[0].text_content().split()).replace('Stars: ', '').replace(' | See full cast and crew', ''))
@@ -114,7 +120,7 @@ class IMDb(callbacks.Plugin):
         else:
             plot_keywords = ''
 
-        elem = root.xpath('//h1[span/@itemprop="name"]/span[last()]/a')
+        elem = root.xpath('//h1[span/@itemprop="name"]/span[@class="nobr"]/a')
         if elem:
             year = elem[0].text
         else:
@@ -176,10 +182,15 @@ class IMDb(callbacks.Plugin):
         if out:
             irc.reply('  '.join(out), prefixNick=False)
 
+        out = []
         if runtime:
-            irc.reply('\x0305Runtime\x03 /\x0311 %s' % runtime, prefixNick=False)
+            out.append('\x0305Runtime\x03 /\x0311 %s' % runtime)
+        if language:
+            out.append('\x0305Language\x03 /\x0311 %s' % language)
+        if out:
+            irc.reply('  '.join(out), prefixNick=False)
 
-    imdb = wrap(imdb, [getopts({'s': '', 'short': ''}), 'text'])
+    imdb = wrap(imdb, ['text'])
 
 
 Class = IMDb
