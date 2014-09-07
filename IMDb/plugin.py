@@ -138,8 +138,8 @@ class IMDb(callbacks.Plugin):
 
         elem = root.xpath('//p[@itemprop="description"]')
         if elem:
-            description = elem[0].text_content()
-            description = unid(description.replace(u'\xbb', '').strip().replace('See full summary', '').strip())
+            description = elem[0].text.strip()#_content()
+            #description = unid(description.replace(u'\xbb', '').strip().replace('See full summary', '').strip())
         else:
             description = ''
 
