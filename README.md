@@ -1,7 +1,7 @@
 Supybot-IMDb
 ============
 
-an imdb plugin for supybot
+Supybot IRC bot plugin. Grabs info from actual imdb website.
 
 
 Required:
