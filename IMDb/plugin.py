@@ -43,13 +43,13 @@ class IMDb(callbacks.Plugin):
         request = urllib2.Request(url)
         try:
             page = urllib2.urlopen(request)
-        except socket.timeout, e:
+        except socket.timeout as e:
             irc.error('\x0304Connection timed out.\x03', prefixNick=False)
             return
-        except urllib2.HTTPError, e:
+        except urllib2.HTTPError as e:
             irc.error('\x0304HTTP Error\x03', prefixNick=False)
             return
-        except urllib2.URLError, e:
+        except urllib2.URLError as e:
             irc.error('\x0304URL Error\x03', prefixNick=False)
             return
 
@@ -75,13 +75,13 @@ class IMDb(callbacks.Plugin):
                         'Accept-Language': 'en-us,en;q=0.5'})
         try:
             page = urllib2.urlopen(request)
-        except socket.timeout, e:
+        except socket.timeout as e:
             irc.error('\x0304Connection timed out.\x03', prefixNick=False)
             return
-        except urllib2.HTTPError, e:
+        except urllib2.HTTPError as e:
             irc.error('\x0304HTTP Error\x03', prefixNick=False)
             return
-        except urllib2.URLError, e:
+        except urllib2.URLError as e:
             irc.error('\x0304URL Error\x03', prefixNick=False)
             return
 
