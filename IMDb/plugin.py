@@ -109,7 +109,7 @@ class IMDb(callbacks.Plugin):
                 'name':     (('//h1/span[@itemprop="name"]', text), ('//h1[@itemprop="name"]', text)),
                 'genres':   (('//div[@itemprop="genre"]',   lambda x: text2(x, 'Genres: ')),),
                 'language': (('//div[h4="Language:"]',      lambda x: text2(x, 'Language: ')),),
-                'stars':    (('//div[h4="Stars:"]',         lambda x: text2(x, 'Stars: ', '| See full cast and crew', '| See full cast & crew')),),
+                'stars':    (('//div[h4="Stars:"]',         lambda x: text2(x, 'Stars: ', '| See full cast and crew', '| See full cast & crew', u('\xbb'))),),
                 'plot_keys':(('//span[@itemprop="keywords"]', lambda x: ' | '.join(y.text for y in x)),
                                 ('//div[h4="Plot Keywords:"]', lambda x: text2(x, ' | See more', 'Plot Keywords: '))),
                 'rating':   (('//div[@class="titlePageSprite star-box-giga-star"]', text),
