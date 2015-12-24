@@ -11,18 +11,25 @@ import supybot.plugins as plugins
 import supybot.ircutils as ircutils
 import supybot.callbacks as callbacks
 
+import sys
 import json
 import socket
-import urllib2
 import unicodedata
 from lxml import html
 from urllib import urlencode
 
-def unid(s):
-    if isinstance(s, unicode):
-        return unicodedata.normalize('NFKD', s).encode('ascii', 'ignore')
-    else:
+if sys.version_info[0] >= 3:
+    def u(s):
         return s
+    from urllib.parse import urlencode
+    from urllib.request import urlopen, Request
+    from urllib.error import HTTPError, URLError
+else:
+    import urllib2
+    from urllib import urlencode
+    from urllib2 import urlopen, Request, HTTPError, URLError
+    def u(s):
+        return unicode(s, "unicode_escape")
 
 class IMDb(callbacks.Plugin):
     """Add the help for "@plugin help IMDb" here
@@ -37,22 +44,23 @@ class IMDb(callbacks.Plugin):
         """<movie>
         output info from IMDb about a movie"""
 
+        # do a google search for movie on imdb and use first result
         textencoded = urlencode({'q': 'site:http://www.imdb.com/title/ %s' % text})
         url = 'http://ajax.googleapis.com/ajax/services/search/web?v=1.0&%s' % (textencoded)
-        request = urllib2.Request(url)
+        request = Request(url)
         try:
-            page = urllib2.urlopen(request)
+            page = urlopen(request).read().decode('utf-8')
         except socket.timeout as e:
             irc.error('\x0304Connection timed out.\x03', prefixNick=False)
             return
-        except urllib2.HTTPError as e:
+        except HTTPError as e:
             irc.error('\x0304HTTP Error\x03', prefixNick=False)
             return
-        except urllib2.URLError as e:
+        except URLError as e:
             irc.error('\x0304URL Error\x03', prefixNick=False)
             return
 
-        result = json.load(page)
+        result = json.loads(page)
 
         if result['responseStatus'] != 200:
             irc.error('\x0304Google search didnt work, returned status %s' % result['responseStatus'])
@@ -69,18 +77,18 @@ class IMDb(callbacks.Plugin):
             irc.error('\x0304Couldnt find a title')
             return
 
-        request = urllib2.Request(imdb_url, 
+        request = Request(imdb_url, 
                 headers={'User-Agent': 'Mozilla/5.0 (X11; Linux i686; rv:5.0) Gecko/20100101 Firefox/5.0',
                         'Accept-Language': 'en-us,en;q=0.5'})
         try:
-            page = urllib2.urlopen(request)
+            page = urlopen(request)
         except socket.timeout as e:
             irc.error('\x0304Connection timed out.\x03', prefixNick=False)
             return
-        except urllib2.HTTPError as e:
+        except HTTPError as e:
             irc.error('\x0304HTTP Error\x03', prefixNick=False)
             return
-        except urllib2.URLError as e:
+        except URLError as e:
             irc.error('\x0304URL Error\x03', prefixNick=False)
             return
 
@@ -118,11 +126,16 @@ class IMDb(callbacks.Plugin):
             for xpath, f in rule:
                 elem = root.xpath(xpath)
                 if elem:
-                    info[title] = unid(f(elem))
+                    info[title] = f(elem))
+                    try: # this will replace some unicode characters with their equivalent ascii. makes life easier on everyone :)
+                         # it's obviously only useful on unicode strings tho, so will TypeError if its a standard python2 string, or a python3 bytes
+                        info[title] = unicodedata.normalize('NFKD', info[title])
+                    except TypeError:
+                        pass
                     break
 
         info['url'] = imdb_url
-        info['year'] = info['title'].rsplit('(', 1)[1].split(')')[0].replace(u'\u2013', '-')
+        info['year'] = info['title'].rsplit('(', 1)[1].split(')')[0].replace(u('\u2013'), '-')
 
         def reply(s): irc.reply(s, prefixNick=False)
 
