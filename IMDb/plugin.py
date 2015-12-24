@@ -126,7 +126,7 @@ class IMDb(callbacks.Plugin):
             for xpath, f in rule:
                 elem = root.xpath(xpath)
                 if elem:
-                    info[title] = f(elem))
+                    info[title] = f(elem)
                     try: # this will replace some unicode characters with their equivalent ascii. makes life easier on everyone :)
                          # it's obviously only useful on unicode strings tho, so will TypeError if its a standard python2 string, or a python3 bytes
                         info[title] = unicodedata.normalize('NFKD', info[title])
