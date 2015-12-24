@@ -19,11 +19,11 @@ from lxml import html
 from urllib import urlencode
 
 if sys.version_info[0] >= 3:
-    def u(s):
-        return s
     from urllib.parse import urlencode
     from urllib.request import urlopen, Request
     from urllib.error import HTTPError, URLError
+    def u(s):
+        return s
 else:
     import urllib2
     from urllib import urlencode
