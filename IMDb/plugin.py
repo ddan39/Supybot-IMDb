@@ -33,7 +33,6 @@ class IMDb(callbacks.Plugin):
         self.__parent = super(IMDb, self)
         self.__parent.__init__(irc)
 
-
     def imdb(self, irc, msg, args, text):
         """<movie>
         output info from IMDb about a movie"""
@@ -86,113 +85,56 @@ class IMDb(callbacks.Plugin):
             return
 
         root = html.parse(page)
+ 
+        def text(x):
+            return x[0].text.strip()
 
-        elem = root.xpath('//h1/span[@itemprop="name"]')
-        name = unid(elem[0].text.strip())
+        def text2(x, *args):
+            r = ' '.join(x[0].text_content().split())
+            for s in args:
+                r = r.replace(s, '')
+            return r
 
-        elem = root.xpath('//h2[@class="tv_header"]')
-        if elem:
-            tv = unid(elem[0].text_content().strip().replace('\n        ', ''))
-        else:
-            tv = ''
 
-        elem = root.xpath('//div[@itemprop="genre"]')
-        if elem:
-            genres = unid(' '.join(elem[0].text_content().split()).strip().replace('Genres: ', ''))
-        else:
-            genres = ''
+        rules = { # 'title': (   ('xpath rule', function), ('backup rule', backup_function), ...   )
+                'title':    (('//head/title', lambda x: text(x).replace(' - IMDb', '')),),
+                'name':     (('//h1/span[@itemprop="name"]', text), ('//h1[@itemprop="name"]', text)),
+                'genres':   (('//div[@itemprop="genre"]',   lambda x: text2(x, 'Genres: ')),),
+                'language': (('//div[h4="Language:"]',      lambda x: text2(x, 'Language: ')),),
+                'stars':    (('//div[h4="Stars:"]',         lambda x: text2(x, 'Stars: ', '| See full cast and crew', '| See full cast & crew')),),
+                'plot_keys':(('//span[@itemprop="keywords"]', lambda x: ' | '.join(y.text for y in x)),
+                                ('//div[h4="Plot Keywords:"]', lambda x: text2(x, ' | See more', 'Plot Keywords: '))),
+                'rating':   (('//div[@class="titlePageSprite star-box-giga-star"]', text),
+                                ('//span[@itemprop="ratingValue"]', text)),
+                'description': (('//p[@itemprop="description"]', text), ('//div[@itemprop="description"]', text)),
+                'director': (('//div[h4="Director:" or h4="Directors:"]', lambda x: text2(x, 'Director: ', 'Directors: ')),),
+                'creator':  (('//div[h4="Creator:"]/span[@itemprop="creator"]/a/span',  text),),
+                'runtime':  (('//time[@itemprop="duration"]', text), ('//div[h4="Runtime:"]/time', text))
+                }
 
-        elem = root.xpath('//div[h4="Language:"]')
-        if elem:
-            language = unid(' '.join(elem[0].text_content().split()).strip().replace('Language: ', ''))
-        else:
-            language = ''
+        info = {'rating': '-'}
 
-        elem = root.xpath('//div[h4="Stars:"]')
-        if elem:
-            stars = unid(' '.join(elem[0].text_content().split()).replace('Stars: ', '').replace(' | See full cast and crew', ''))
-        else:
-            stars = ''
+        for title, rule in rules.iteritems():
+            for xpath, f in rule:
+                elem = root.xpath(xpath)
+                if elem:
+                    info[title] = unid(f(elem))
+                    break
 
-        elem = root.xpath('//div[h4="Plot Keywords:"]')
-        if elem:
-            plot_keywords = unid(' '.join(elem[0].text_content().replace(u'\xbb', '').split()).strip().replace(' | See more', '').replace('Plot Keywords: ', ''))
-        else:
-            plot_keywords = ''
+        info['url'] = imdb_url
+        info['year'] = info['title'].rsplit('(', 1)[1].split(')')[0].replace(u'\u2013', '-')
 
-        elem = root.xpath('//h1[span/@itemprop="name"]/span[@class="nobr"]/a')
-        if elem:
-            year = elem[0].text
-        else:
-            elem = root.xpath('//h1[span/@itemprop="name"]/span[@class="nobr"]')
-            if elem:
-                year = unid(elem[0].text.strip().strip(')(').replace(u'\u2013', '-'))
-            else:
-                year = unid(root.xpath('//h1[span/@itemprop="name"]/span[last()]')[0].text.strip().strip(')(').replace(u'\u2013', '-'))
+        def reply(s): irc.reply(s, prefixNick=False)
 
-        elem = root.xpath('//div[@class="star-box-details"]/strong/span|//div[@class="star-box-details"]/span[@class="mellow"]/span')
-        if elem:
-            rating = elem[0].text + '/' + elem[1].text
-        else:
-            rating = '-/10'
-
-        elem = root.xpath('//p[@itemprop="description"]')
-        if elem:
-            description = elem[0].text.strip()#_content()
-            #description = unid(description.replace(u'\xbb', '').strip().replace('See full summary', '').strip())
-        else:
-            description = ''
-
-        elem = root.xpath('//div[@itemprop="director"]/a/span')
-        if elem:
-            director = unid(elem[0].text)
-        else:
-            director = ''
-
-        elem = root.xpath('//div[h4="\n  Creator:\n  "]/a')
-        if elem:
-            creator = unid(elem[0].text)
-        else:
-            creator = ''
-
-        elem = root.xpath('//div[h4="Runtime:"]/time')
-        if elem:
-            runtime = elem[0].text
-        else:
-            runtime = ''
-
-        irc.reply('\x02\x031,8IMDb\x03 %s' % imdb_url, prefixNick=False)
-        if tv:
-            irc.reply('\x02TV Show\x02 /\x0311 %s' % tv, prefixNick=False)
-        irc.reply('\x02\x0304\x1F%s\x1F\x0311\x02 (%s) %s' % (name, year, rating), prefixNick=False)
-        if description:
-            irc.reply('\x0305Description\03 /\x0311 %s' % description, prefixNick=False)
-        if creator:
-            irc.reply('\x0305Creator\03 /\x0311 %s' % creator, prefixNick=False)
-
-        out = []
-        if director:
-            out.append('\x0305Director\03 /\x0311 %s' % director)
-        if stars:
-            out.append('\x0305Stars\x03 /\x0311 %s' % stars)
-        if out:
-            irc.reply('  '.join(out), prefixNick=False)
-
-        out = []
-        if genres:
-            out.append('\x0305Genres\03 /\x0311 %s' % genres)
-        if plot_keywords:
-            out.append('\x0305Plot Keywords\03 /\x0311 %s' % plot_keywords)
-        if out:
-            irc.reply('  '.join(out), prefixNick=False)
-
-        out = []
-        if runtime:
-            out.append('\x0305Runtime\x03 /\x0311 %s' % runtime)
-        if language:
-            out.append('\x0305Language\x03 /\x0311 %s' % language)
-        if out:
-            irc.reply('  '.join(out), prefixNick=False)
+        for line in self.registryValue('outputorder', msg.args[0]).split(';'):
+            out = []
+            for field in line.split(','):
+                try:
+                    out.append(self.registryValue('formats.'+field, msg.args[0]) % info)
+                except KeyError:
+                    continue
+            if out:
+                reply('  '.join(out))
 
     imdb = wrap(imdb, ['text'])
 
