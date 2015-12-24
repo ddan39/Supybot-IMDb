@@ -16,7 +16,6 @@ import json
 import socket
 import unicodedata
 from lxml import html
-from urllib import urlencode
 
 if sys.version_info[0] >= 3:
     from urllib.parse import urlencode
