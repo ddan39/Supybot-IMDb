@@ -45,7 +45,7 @@ class IMDb(callbacks.Plugin):
 
         # do a google search for movie on imdb and use first result
         textencoded = urlencode({'v': '1.0', 'rsz': 3, 'q': 'site:http://www.imdb.com/title/ %s' % text})
-        url = 'http://ajax.googleapis.com/ajax/services/search/web?%s' % (textencoded)
+        url = 'http://ajax.googleapis.com/ajax/services/search/web?%s' % textencoded
         ref = 'http://%s/%s' % (dynamic.irc.server, dynamic.irc.nick)
         headers = dict(utils.web.defaultHeaders)
         headers['Referer'] = ref
