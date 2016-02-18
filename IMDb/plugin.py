@@ -44,20 +44,12 @@ class IMDb(callbacks.Plugin):
         output info from IMDb about a movie"""
 
         # do a google search for movie on imdb and use first result
-        textencoded = urlencode({'q': 'site:http://www.imdb.com/title/ %s' % text})
-        url = 'http://ajax.googleapis.com/ajax/services/search/web?v=1.0&%s' % (textencoded)
-        request = Request(url)
-        try:
-            page = urlopen(request).read().decode('utf-8')
-        except socket.timeout as e:
-            irc.error('\x0304Connection timed out.\x03', prefixNick=False)
-            return
-        except HTTPError as e:
-            irc.error('\x0304HTTP Error\x03', prefixNick=False)
-            return
-        except URLError as e:
-            irc.error('\x0304URL Error\x03', prefixNick=False)
-            return
+        textencoded = urlencode({'v': '1.0', 'rsz': 3, 'q': 'site:http://www.imdb.com/title/ %s' % text})
+        url = 'http://ajax.googleapis.com/ajax/services/search/web?%s' % (textencoded)
+        ref = 'http://%s/%s' % (dynamic.irc.server, dynamic.irc.nick)
+        headers = dict(utils.web.defaultHeaders)
+        headers['Referer'] = ref
+        page = utils.web.getUrl(url, headers=headers).decode('utf-8')
 
         result = json.loads(page)
 
@@ -76,22 +68,12 @@ class IMDb(callbacks.Plugin):
             irc.error('\x0304Couldnt find a title')
             return
 
-        request = Request(imdb_url, 
-                headers={'User-Agent': 'Mozilla/5.0 (X11; Linux i686; rv:5.0) Gecko/20100101 Firefox/5.0',
-                        'Accept-Language': 'en-us,en;q=0.5'})
-        try:
-            page = urlopen(request)
-        except socket.timeout as e:
-            irc.error('\x0304Connection timed out.\x03', prefixNick=False)
-            return
-        except HTTPError as e:
-            irc.error('\x0304HTTP Error\x03', prefixNick=False)
-            return
-        except URLError as e:
-            irc.error('\x0304URL Error\x03', prefixNick=False)
-            return
+        pagefd = utils.web.getUrlFd(imdb_url,
+                headers={"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                         "Accept-Language": "en-US,en;q=0.5",
+                         "User-Agent": "Mozilla/5.0 (X11; Linux i686; rv:5.0) Gecko/20100101 Firefox/5.0"})
 
-        root = html.parse(page)
+        root = html.parse(pagefd)
  
         def text(x):
             return x[0].text.strip()
