@@ -44,22 +44,15 @@ class IMDb(callbacks.Plugin):
         output info from IMDb about a movie"""
 
         # do a google search for movie on imdb and use first result
-        textencoded = urlencode({'v': '1.0', 'rsz': 3, 'q': 'site:http://www.imdb.com/title/ %s' % text})
-        url = 'http://ajax.googleapis.com/ajax/services/search/web?%s' % textencoded
-        ref = 'http://%s/%s' % (dynamic.irc.server, dynamic.irc.nick)
-        headers = dict(utils.web.defaultHeaders)
-        headers['Referer'] = ref
-        page = utils.web.getUrl(url, headers=headers).decode('utf-8')
-
-        result = json.loads(page)
-
-        if result['responseStatus'] != 200:
-            irc.error('\x0304Google search didnt work, returned status %s' % result['responseStatus'])
-            return
+        query = 'site:http://www.imdb.com/title/ %s' % text
+        google_plugin = irc.getCallback('Google')
+        if not google_plugin:
+            irc.error('Google plugin is not loaded.')
+        results = google_plugin.decode(google_plugin.search(query, msg.args[0]))
 
         imdb_url = None
 
-        for r in result['responseData']['results']:
+        for r in results:
             if r['url'][-1] == '/':
                 imdb_url = r['url']
                 break
