@@ -68,30 +68,37 @@ class IMDb(callbacks.Plugin):
 
         root = html.parse(pagefd)
  
-        def text(x):
-            return x[0].text.strip()
+        def text(*args):
+            def f(elem):
+                elem = elem[0].text.strip()
+                for s in args:
+                    elem = elem.replace(s, '')
+                return elem
+            return f
 
-        def text2(x, *args):
-            r = ' '.join(x[0].text_content().split())
-            for s in args:
-                r = r.replace(s, '')
-            return r
+        def text2(*args):
+            def f(elem):
+                elem = ' '.join(elem[0].text_content().split())
+                for s in args:
+                    elem = elem.replace(s, '')
+                return elem
+            return f
 
 
         rules = { # 'title': (   ('xpath rule', function), ('backup rule', backup_function), ...   )
-                'title':    (('//head/title', lambda x: text(x).replace(' - IMDb', '')),),
-                'name':     (('//h1/span[@itemprop="name"]', text), ('//h1[@itemprop="name"]', text)),
-                'genres':   (('//div[@itemprop="genre"]',   lambda x: text2(x, 'Genres: ')),),
-                'language': (('//div[h4="Language:"]',      lambda x: text2(x, 'Language: ')),),
-                'stars':    (('//div[h4="Stars:"]',         lambda x: text2(x, 'Stars: ', '| See full cast and crew', '| See full cast & crew', u('\xbb'))),),
+                'title':    (('//head/title', text(' - IMDb', '')),),
+                'name':     (('//h1/span[@itemprop="name"]', text()), ('//h1[@itemprop="name"]', text())),
+                'genres':   (('//div[@itemprop="genre"]',   text2(x, 'Genres: ')),),
+                'language': (('//div[h4="Language:"]',      text2(x, 'Language: ')),),
+                'stars':    (('//div[h4="Stars:"]',         text2(x, 'Stars: ', '| See full cast and crew', '| See full cast & crew', u('\xbb'))),),
                 'plot_keys':(('//span[@itemprop="keywords"]', lambda x: ' | '.join(y.text for y in x)),
-                                ('//div[h4="Plot Keywords:"]', lambda x: text2(x, ' | See more', 'Plot Keywords: '))),
-                'rating':   (('//div[@class="titlePageSprite star-box-giga-star"]', text),
-                                ('//span[@itemprop="ratingValue"]', text)),
-                'description': (('//p[@itemprop="description"]', text2), ('//div[@itemprop="description"]', text2)),
-                'director': (('//div[h4="Director:" or h4="Directors:"]', lambda x: text2(x, 'Director: ', 'Directors: ')),),
-                'creator':  (('//div[h4="Creator:"]/span[@itemprop="creator"]/a/span',  text),),
-                'runtime':  (('//time[@itemprop="duration"]', text), ('//div[h4="Runtime:"]/time', text))
+                                ('//div[h4="Plot Keywords:"]', text2(x, ' | See more', 'Plot Keywords: '))),
+                'rating':   (('//div[@class="titlePageSprite star-box-giga-star"]', text()),
+                                ('//span[@itemprop="ratingValue"]', text())),
+                'description': (('//p[@itemprop="description"]', text2()), ('//div[@itemprop="description"]', text2())),
+                'director': (('//div[h4="Director:" or h4="Directors:"]', text2(x, 'Director: ', 'Directors: ')),),
+                'creator':  (('//div[h4="Creator:"]/span[@itemprop="creator"]/a/span',  text()),),
+                'runtime':  (('//time[@itemprop="duration"]', text()), ('//div[h4="Runtime:"]/time', text()))
                 }
 
         info = {'rating': '-'}
