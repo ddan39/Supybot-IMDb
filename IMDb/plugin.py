@@ -66,8 +66,11 @@ class IMDb(callbacks.Plugin):
                          "Accept-Language": "en-US,en;q=0.5",
                          "User-Agent": "Mozilla/5.0 (X11; Linux i686; rv:5.0) Gecko/20100101 Firefox/5.0"})
 
+        # create the lxml.html root element
         root = html.parse(pagefd)
  
+        # these 2 closures return functions that are used with rules
+        # to turn each xpath element into its final string
         def text(*args):
             def f(elem):
                 elem = elem[0].text.strip()
@@ -85,6 +88,9 @@ class IMDb(callbacks.Plugin):
             return f
 
 
+        # Dictionary of rules for page scraping. has each xpath and a function to convert that element into its final string.
+        # Each value is a tuple of tuples so that you can provide multiple sets of xpaths/functions for each piece of info.
+        # They are tried In order until one works.
         rules = { # 'title': (   ('xpath rule', function), ('backup rule', backup_function), ...   )
                 'title':    (('//head/title', text(' - IMDb', '')),),
                 'name':     (('//h1/span[@itemprop="name"]', text()), ('//h1[@itemprop="name"]', text())),
@@ -101,8 +107,10 @@ class IMDb(callbacks.Plugin):
                 'runtime':  (('//time[@itemprop="duration"]', text()), ('//div[h4="Runtime:"]/time', text()))
                 }
 
+        # If IMDb has no rating yet
         info = {'rating': '-'}
 
+        # loop over the set of rules
         for title, rule in rules.iteritems():
             for xpath, f in rule:
                 elem = root.xpath(xpath)
@@ -120,6 +128,8 @@ class IMDb(callbacks.Plugin):
 
         def reply(s): irc.reply(s, prefixNick=False)
 
+        # output based on order in config. lines are separated by ; and fiels on a line separated by ,
+        # each field has a corresponding format config
         for line in self.registryValue('outputorder', msg.args[0]).split(';'):
             out = []
             for field in line.split(','):
