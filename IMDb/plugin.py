@@ -124,7 +124,10 @@ class IMDb(callbacks.Plugin):
                     break
 
         info['url'] = imdb_url
-        info['year'] = info['title'].rsplit('(', 1)[1].split(')')[0].replace(u('\u2013'), '-')
+        try:
+            info['year'] = info['title'].rsplit('(', 1)[1].split(')')[0].replace(u('\u2013'), '-')
+        except IndexError:
+            info['year'] = ''
 
         def reply(s): irc.reply(s, prefixNick=False)
 
