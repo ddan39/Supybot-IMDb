@@ -52,6 +52,7 @@ class IMDb(callbacks.Plugin):
 
         imdb_url = None
 
+        # use first result that ends with a / so that we know its link to main movie page
         for r in results:
             if r['url'][-1] == '/':
                 imdb_url = r['url']
