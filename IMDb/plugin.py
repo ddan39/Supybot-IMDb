@@ -94,15 +94,15 @@ class IMDb(callbacks.Plugin):
         rules = { # 'title': (   ('xpath rule', function), ('backup rule', backup_function), ...   )
                 'title':    (('//head/title', text(' - IMDb', '')),),
                 'name':     (('//h1/span[@itemprop="name"]', text()), ('//h1[@itemprop="name"]', text())),
-                'genres':   (('//div[@itemprop="genre"]',   text2(x, 'Genres: ')),),
-                'language': (('//div[h4="Language:"]',      text2(x, 'Language: ')),),
-                'stars':    (('//div[h4="Stars:"]',         text2(x, 'Stars: ', '| See full cast and crew', '| See full cast & crew', u('\xbb'))),),
+                'genres':   (('//div[@itemprop="genre"]',   text2('Genres: ')),),
+                'language': (('//div[h4="Language:"]',      text2('Language: ')),),
+                'stars':    (('//div[h4="Stars:"]',         text2('Stars: ', '| See full cast and crew', '| See full cast & crew', u('\xbb'))),),
                 'plot_keys':(('//span[@itemprop="keywords"]', lambda x: ' | '.join(y.text for y in x)),
-                                ('//div[h4="Plot Keywords:"]', text2(x, ' | See more', 'Plot Keywords: '))),
+                                ('//div[h4="Plot Keywords:"]', text2(' | See more', 'Plot Keywords: '))),
                 'rating':   (('//div[@class="titlePageSprite star-box-giga-star"]', text()),
                                 ('//span[@itemprop="ratingValue"]', text())),
                 'description': (('//p[@itemprop="description"]', text2()), ('//div[@itemprop="description"]', text2())),
-                'director': (('//div[h4="Director:" or h4="Directors:"]', text2(x, 'Director: ', 'Directors: ')),),
+                'director': (('//div[h4="Director:" or h4="Directors:"]', text2('Director: ', 'Directors: ')),),
                 'creator':  (('//div[h4="Creator:"]/span[@itemprop="creator"]/a/span',  text()),),
                 'runtime':  (('//time[@itemprop="duration"]', text()), ('//div[h4="Runtime:"]/time', text()))
                 }
