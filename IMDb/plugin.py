@@ -132,7 +132,7 @@ class IMDb(callbacks.Plugin):
 
         def reply(s): irc.reply(s, prefixNick=False)
 
-        # output based on order in config. lines are separated by ; and fiels on a line separated by ,
+        # output based on order in config. lines are separated by ; and fields on a line separated by ,
         # each field has a corresponding format config
         for line in self.registryValue('outputorder', msg.args[0]).split(';'):
             out = []
