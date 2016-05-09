@@ -112,8 +112,8 @@ class IMDb(callbacks.Plugin):
         info = {'rating': '-'}
 
         # loop over the set of rules
-        for title, rule in rules.iteritems():
-            for xpath, f in rule:
+        for title in rules:
+            for xpath, f in rules[title]:
                 elem = root.xpath(xpath)
                 if elem:
                     info[title] = f(elem)
