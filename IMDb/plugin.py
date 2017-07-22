@@ -65,10 +65,10 @@ class IMDb(callbacks.Plugin):
 
         imdb_url = None
 
-        # use first result that has 'tt' at start of last group of link so that we know its link to main movie page
+        # find results that link to movie page, based on URL format
         for r in results:
             print r[2]
-            if r[2].split('/')[-1][0:6] == 'Title?':
+            if (r[2].split('/')[-1][0:6] == 'Title?') or (r[2].split('/')[-2][0:2] == 'tt'):
                 imdb_url = format('%u', r[2])
                 # clean leading < and trailing >
                 print "URL is %s" % imdb_url
