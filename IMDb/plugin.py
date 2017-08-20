@@ -68,7 +68,7 @@ class IMDb(callbacks.Plugin):
         if searchengine == 'google':
             results = search_plugin.decode(search_plugin.search(query, msg.args[0]))
         elif searchengine == 'ddg':
-            results = search_plugin.search_core(query.encode('utf-8'), channel_context=msg.args[0], max_results=10, show_snippet=False)
+            results = search_plugin.search_core(query, channel_context=msg.args[0], max_results=10, show_snippet=False)
         else:
             irc.error('Search plugin not supported')
             return
@@ -84,10 +84,8 @@ class IMDb(callbacks.Plugin):
         elif searchengine == 'ddg':
             # find results that link to movie page, based on URL format
             for r in results:
-                print repr(r)
-                if (r[2].split('/')[-1][0:6] == 'Title?') or (r[2].split('/')[-2][0:2] == 'tt'):
-                    imdb_url = format('%u', r[2])
-                    print "URL is %s" % imdb_url
+                if (r[2].split('/')[-1][0:6] == 'Title?') or ((r[2].split('/')[-2][0:2] == 'tt') and (r[2][-1] == '/')):
+                    imdb_url = r[2]          
                     break
 
         if imdb_url is None:
