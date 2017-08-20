@@ -57,22 +57,38 @@ class IMDb(callbacks.Plugin):
         output info from IMDb about a movie"""
 
         # do a search for movie on imdb and use first result
+        searchengine = self.registryValue('searchengine').lower()
+
         query = 'site:http://www.imdb.com/title/ %s' % text
-        search_plugin = irc.getCallback('DDG')
+
+        search_plugin = irc.getCallback(searchengine)
         if not search_plugin:
             irc.error('Search plugin is not loaded.')
-        results = search_plugin.search_core(query.encode('utf-8'), channel_context=msg.args[0], max_results=10, show_snippet=False)
+
+        if searchengine == 'google':
+            results = search_plugin.decode(search_plugin.search(query, msg.args[0]))
+        elif searchengine == 'ddg':
+            results = search_plugin.search_core(query.encode('utf-8'), channel_context=msg.args[0], max_results=10, show_snippet=False)
+        else:
+            irc.error('Search plugin not supported')
+            return
 
         imdb_url = None
 
-        # find results that link to movie page, based on URL format
-        for r in results:
-            print r[2]
-            if (r[2].split('/')[-1][0:6] == 'Title?') or (r[2].split('/')[-2][0:2] == 'tt'):
-                imdb_url = format('%u', r[2])
-                # clean leading < and trailing >
-                print "URL is %s" % imdb_url
-                break
+        if searchengine == 'google':
+            # use first result that ends with a / so that we know its link to main movie page
+            for r in results:
+                if r['url'][-1] == '/':
+                    imdb_url = r['url']
+                    break
+        elif searchengine == 'ddg':
+            # find results that link to movie page, based on URL format
+            for r in results:
+                print repr(r)
+                if (r[2].split('/')[-1][0:6] == 'Title?') or (r[2].split('/')[-2][0:2] == 'tt'):
+                    imdb_url = format('%u', r[2])
+                    print "URL is %s" % imdb_url
+                    break
 
         if imdb_url is None:
             irc.error('\x0304Couldnt find a title')

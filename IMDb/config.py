@@ -37,6 +37,9 @@ IMDb = conf.registerPlugin('IMDb')
 
 conf.registerGroup(IMDb, 'formats')
 
+conf.registerChannelValue(IMDb, 'searchengine',
+        registry.String('google', 'Search engine used to find imdb page. Current options are Google, or DDG'))
+
 conf.registerChannelValue(IMDb, 'outputorder',
         registry.String('url;title;description;creator,director,stars;genres,plot_keys;runtime,language', 
             'Order that parts will be output. ; is line separator and , is field separator'))
