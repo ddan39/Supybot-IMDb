@@ -56,19 +56,22 @@ class IMDb(callbacks.Plugin):
         """<movie>
         output info from IMDb about a movie"""
 
-        # do a google search for movie on imdb and use first result
+        # do a search for movie on imdb and use first result
         query = 'site:http://www.imdb.com/title/ %s' % text
-        google_plugin = irc.getCallback('Google')
-        if not google_plugin:
-            irc.error('Google plugin is not loaded.')
-        results = google_plugin.decode(google_plugin.search(query, msg.args[0]))
+        search_plugin = irc.getCallback('DDG')
+        if not search_plugin:
+            irc.error('Search plugin is not loaded.')
+        results = search_plugin.search_core(query.encode('utf-8'), channel_context=msg.args[0], max_results=10, show_snippet=False)
 
         imdb_url = None
 
-        # use first result that ends with a / so that we know its link to main movie page
+        # find results that link to movie page, based on URL format
         for r in results:
-            if r['url'][-1] == '/':
-                imdb_url = r['url']
+            print r[2]
+            if (r[2].split('/')[-1][0:6] == 'Title?') or (r[2].split('/')[-2][0:2] == 'tt'):
+                imdb_url = format('%u', r[2])
+                # clean leading < and trailing >
+                print "URL is %s" % imdb_url
                 break
 
         if imdb_url is None:
