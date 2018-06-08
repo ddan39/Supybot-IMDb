@@ -132,7 +132,7 @@ class IMDb(callbacks.Plugin):
                                 ('//div[h4="Plot Keywords:"]', text2(' | See more', 'Plot Keywords: '))),
                 'rating':   (('//div[@class="titlePageSprite star-box-giga-star"]', text()),
                                 ('//span[@itemprop="ratingValue"]', text())),
-                'description': (('//p[@itemprop="description"]', text2()), ('//div[@itemprop="description"]', text2())),
+                'description': (('//div[@class="summary_text"]', text2('See full summary')), ('//p[@itemprop="description"]', text2()), ('//div[@itemprop="description"]', text2())),
                 'director': (('//div[h4="Director:" or h4="Directors:"]', text2('Director: ', 'Directors: ')),),
                 'creator':  (('//div[h4="Creator:"]/span[@itemprop="creator"]/a/span',  text()),),
                 'runtime':  (('//time[@itemprop="duration"]', text()), ('//div[h4="Runtime:"]/time', text()))
