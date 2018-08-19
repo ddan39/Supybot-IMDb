@@ -135,7 +135,7 @@ class IMDb(callbacks.Plugin):
                 'stars':    (('//div[h4="Stars:"]',         text2('Stars: ', '| See full cast and crew', '| See full cast & crew', u('\xbb'))),),
                 'plot_keys':(('//span[@itemprop="keywords"]', lambda x: ' | '.join(y.text for y in x)),
                                 ('//div[h4="Plot Keywords:"]', text2(' | See more', 'Plot Keywords: '))),
-                'rating':   (('//div[@class="titlePageSprite star-box-giga-star"]', text()),
+                'rating':   (('//div[@class="ratingValue"]//span', text()),('//div[@class="titlePageSprite star-box-giga-star"]', text()),
                                 ('//span[@itemprop="ratingValue"]', text())),
                 'description': (('//div[@class="summary_text"]', text2('See full summary', u' \xbb')), ('//p[@itemprop="description"]', text2()), ('//div[@itemprop="description"]', text2())),
                 'director': (('//div[h4="Director:" or h4="Directors:"]', text2('Director: ', 'Directors: ')),),
@@ -160,7 +160,7 @@ class IMDb(callbacks.Plugin):
                     break
 
         info['url'] = imdb_url
-        if not info['year']:
+        if 'year' not in info:
             try:
                 info['year'] = info['title'].rsplit('(', 1)[1].split(')')[0].replace(u('\u2013'), '-')
             except IndexError:
