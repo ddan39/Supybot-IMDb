@@ -68,7 +68,11 @@ class IMDb(callbacks.Plugin):
         if searchengine == 'google':
             results = search_plugin.decode(search_plugin.search(query, msg.args[0]))
         elif searchengine == 'ddg':
-            results = search_plugin.search_core(query, channel_context=msg.args[0], max_results=10, show_snippet=False)
+            try:
+                results = search_plugin.search_core(query, channel_context=msg.args[0], max_results=10, show_snippet=False)
+            except utils.web.Error as e:
+                irc.error(str(e))
+                return
         else:
             irc.error('Search plugin not supported')
             return
@@ -123,16 +127,17 @@ class IMDb(callbacks.Plugin):
         # Each value is a tuple of tuples so that you can provide multiple sets of xpaths/functions for each piece of info.
         # They are tried In order until one works.
         rules = { # 'title': (   ('xpath rule', function), ('backup rule', backup_function), ...   )
-                'title':    (('//head/title', text(' - IMDb', '')),),
-                'name':     (('//h1/span[@itemprop="name"]', text()), ('//h1[@itemprop="name"]', text())),
-                'genres':   (('//div[@itemprop="genre"]',   text2('Genres: ')),),
+                'title':    (('//head/title', text(' - IMDb')),),
+                'name':     (('//div[@class="title_wrapper"]/h1', text()), ('//h1/span[@itemprop="name"]', text()), ('//h1[@itemprop="name"]', text())),
+                'year':     (('//span[@id="titleYear"]/a', text()),),
+                'genres':   (('//div[h4="Genres:"]', text2('Genres: ')), ('//div[@itemprop="genre"]',   text2('Genres: '))),
                 'language': (('//div[h4="Language:"]',      text2('Language: ')),),
                 'stars':    (('//div[h4="Stars:"]',         text2('Stars: ', '| See full cast and crew', '| See full cast & crew', u('\xbb'))),),
                 'plot_keys':(('//span[@itemprop="keywords"]', lambda x: ' | '.join(y.text for y in x)),
                                 ('//div[h4="Plot Keywords:"]', text2(' | See more', 'Plot Keywords: '))),
                 'rating':   (('//div[@class="titlePageSprite star-box-giga-star"]', text()),
                                 ('//span[@itemprop="ratingValue"]', text())),
-                'description': (('//div[@class="summary_text"]', text2('See full summary')), ('//p[@itemprop="description"]', text2()), ('//div[@itemprop="description"]', text2())),
+                'description': (('//div[@class="summary_text"]', text2('See full summary', u' \xbb')), ('//p[@itemprop="description"]', text2()), ('//div[@itemprop="description"]', text2())),
                 'director': (('//div[h4="Director:" or h4="Directors:"]', text2('Director: ', 'Directors: ')),),
                 'creator':  (('//div[h4="Creator:"]/span[@itemprop="creator"]/a/span',  text()),),
                 'runtime':  (('//time[@itemprop="duration"]', text()), ('//div[h4="Runtime:"]/time', text()))
@@ -155,10 +160,11 @@ class IMDb(callbacks.Plugin):
                     break
 
         info['url'] = imdb_url
-        try:
-            info['year'] = info['title'].rsplit('(', 1)[1].split(')')[0].replace(u('\u2013'), '-')
-        except IndexError:
-            info['year'] = ''
+        if not info['year']:
+            try:
+                info['year'] = info['title'].rsplit('(', 1)[1].split(')')[0].replace(u('\u2013'), '-')
+            except IndexError:
+                info['year'] = ''
 
         def reply(s): irc.reply(s, prefixNick=False)
 
